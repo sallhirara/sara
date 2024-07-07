@@ -74,10 +74,13 @@
         main,
         footer {
             text-align: center;
-            margin: 5px;
+            margin: 20px;
         }
 
         footer {
+            position: sticky;
+            top: 100vh;
+            top: 100dvh;
             font-size: 12px;
             font-family: var(--font-family);
             color: var(--font-color);
@@ -368,7 +371,8 @@
             flatpickr("#date-range", {
                 mode: "range",
                 dateFormat: "Y-m-d",
-                onClose: handleDateSelection
+                onClose: handleDateSelection,
+                position: 'auto center'
             });
 
             flatpickr(".event-time", {
