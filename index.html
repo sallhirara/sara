@@ -1,1 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #333;
+            --secondary-color: lightgrey;
+            --font-family: 'Arial, Helvetica, sans-serif';
+            --font-size-base: 16px;
+            --font-size-large: 20px;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #ddd;
+            --secondary-color: #333;
+            --background-color: #222;
+            --font-color: #ddd;
+        }
+
+        [data-theme="light"] {
+            --primary-color: #333;
+            --secondary-color: lightgrey;
+            --background-color: #fff;
+            --font-color: #333;
+        }
+
+        #summary,
+        #date-range,
+        .event-textarea,
+        .event-time,
+        .event-name,
+        .event-comment {
+            background-color: var(--secondary-color);
+            color: var(--font-color);
+        }
+
+        .edit-mode #summary,
+        .edit-mode #date-range,
+        .edit-mode .event-textarea,
+        .edit-mode .event-time,
+        .edit-mode .event-name,
+        .edit-mode .event-comment {
+            background-color: ghostwhite;
+            color: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            height: 100vh;
+            padding: 5px;
+            line-height: 1.6;
+            font-size: var(--font-size-base);
+            background-color: var(--background-color);
+            color: var(--font-color);
+        }
+
+        header {
+            text-align: center;
+            margin: 20px;
+        }
+
+        main,
+        footer {
+            text-align: center;
+            margin: 5px;
+        }
+
+        footer {
+            font-size: 12px;
+            font-family: var(--font-family);
+            color: var(--font-color);
+            text-align: center;
+        }
+
+        #summary {
+            font-size: var(--font-size-large);
+            color: var(--font-color);
+            text-align: center;
+            font-family: var(--font-family);
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+            max-width: 400px;
+            min-width: 100px;
+            max-height: 68px;
+            min-height: 40px;
+            background-color: var(--background-color);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #date-range {
+            font-family: 'Arial, Helvetica, sans-serif';
+            font-size: var(--font-size-base);
+            color: var(--font-color);
+            border: 1px solid #999;
+            border-radius: 5px;
+            text-align: center;
+            padding: 5px;
+            width: 230px;
+            background-color: var(--secondary-color);
+        }
+
+        #generateButton {
+            margin-bottom: 20px 0;
+            font-size: 24px;
+            border: none;
+            background-color: transparent;
+            color: var(--primary-color);
+        }
+
+        .event-list {
+            max-width: 600px;
+            position: relative;
+            margin: auto;
+            margin-top: 20px;
+        }
+
+        .event {
+            margin-bottom: 20px;
+            position: relative;
+            padding: 10px;
+        }
+
+        .event-header {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            cursor: pointer;
+        }
+
+        .event-header-top {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .event-header-bottom {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 5px;
+        }
+
+        .event-icon {
+            font-size: 20px;
+            width: 24px;
+            margin-right: 10px;
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .event-icon.open {
+            transform: rotate(90deg);
+        }
+
+        .event-dot {
+            width: 14px;
+            height: 14px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .timeline-line {
+            position: absolute;
+            width: 4px;
+            background-color: var(--primary-color);
+            z-index: -1;
+            margin-left: 0px;
+        }
+
+        .event-title {
+            font-size: var(--font-size-base);
+            font-weight: lighter;
+            flex-grow: 1;
+        }
+
+        .event-header input[type="text"] {
+            font-size: 25px;
+            background-color: var(--background-color);
+            color: var(--font-color);
+            width: 89.3%;
+            font-weight: bold;
+            margin: 0 0 0 60px;
+            border-radius: 5px;
+            border: var(--background-color);
+        }
+
+        .event-content {
+            display: none;
+            margin-left: 10px;
+            padding-left: 10px;
+        }
+
+        .event-content.open {
+            display: block;
+            margin: 10px 10px 10px 60px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: var(--secondary-color);
+        }
+
+        .event-detail {
+            display: flex;
+            flex-direction: column;
+            margin: 5px 0;
+        }
+
+        .event-upper-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .event-textarea {
+            resize: none;
+            font-size: var(--font-size-base);
+            color: var(--font-color);
+            font-family: var(--font-family);
+            border: none;
+            border-radius: 5px;
+            padding: 5px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .event-time {
+            padding: 0.5em;
+            height: 1.4em;
+            width: 50px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .event-name {
+            margin-left: 5px;
+            margin-right: 10px;
+            padding: 0.5em;
+            height: 1.2em;
+            width: 100%;
+            font-size: var(--font-size-base);
+            border: none;
+            border-radius: 5px;
+        }
+
+        .event-comment {
+            display: block;
+            resize: none;
+            font-size: 12px;
+            color: var(--font-color);
+            font-family: var(--font-family);
+            border: none;
+            border-radius: 5px;
+            width: calc(100% - 82px);
+            margin: 0 39px 0 55px;
+            padding: 4px 8px;
+        }
+
+        .add-event-button {
+            display: flex;
+            font-size: 20px;
+            border: none;
+            background-color: transparent;
+            color: var(--primary-color);
+            margin: 0 0 15px 5px;
+            padding: 0;
+            cursor: pointer;
+        }
+
+        .delete-button {
+            background-color: #999;
+            color: var(--primary-color);
+            border: none;
+            background-color: transparent;
+            cursor: pointer;
+            height: 1.2em;
+            font-size: var(--font-size-base);
+        }
+
+        .control-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .control-buttons button {
+            border: 1px solid transparent;
+            border-radius: 5px;
+            background-color: transparent;
+            color: var(--primary-color);
+            padding: 0.5em;
+            cursor: pointer;
+            font-size: var(--font-size-base);
+        }
+
+        /**animation**/
+        .pulse-animation {
+            transform-origin: center bottom;
+            animation: pulse 2s linear infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: rotate(30deg);
+            }
+            50% {
+                transform: rotate(-30deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body data-theme="light">
+    <header>
+        <h1>ITINERARY</h1>
+    </header>
+    <main>
+        <textarea id="summary" name="summary" rows="3" cols="40" maxlength="77" placeholder="Summary"></textarea>
+        <div class="control-buttons">
+            <button id="toggle-edit" onclick="toggleEditMode()"><i class="fa fa-eye"></i></button>
+            <button id="toggle-all-events" onclick="toggleAllEvents()"><i class="fa fa-angle-double-down"></i></button>
+            <button id="reset-button" onclick="resetEvents()"><i class="fa fa-undo"></i></button>
+            <button id="save-button" onclick="saveEvents()"><i class="fa fa-save"></i></button>
+            <button id="share-button" onclick="shareEvents()"><i class="fa fa-share-alt"></i></button>
+            <button id="toggle-theme" onclick="toggleTheme()"><i class="fa fa-adjust"></i></button>
+        </div>
+        <section class="input-group">
+            <input type="text" id="date-range" aria-label="Select Date Range" placeholder="Select Date Range">
+            <input type="hidden" id="start-date">
+            <input type="hidden" id="end-date">
+            <button onclick="generateEvents()" id="generateButton"><i class="fa-solid fa-check-double"></i></button>
+        </section>
+        <section class="event-list" role="list">
+            <div class="timeline-line"></div>
+        </section>
+    </main>
+    <footer>
+        Copyright © 2024 travelitinerary Web Page. All rights reserved.
+    </footer>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+    <script>
+        let isEditMode = false;
+
+        document.addEventListener('DOMContentLoaded', function () {
+            flatpickr("#date-range", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                onClose: handleDateSelection
+            });
+
+            flatpickr(".event-time", {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true
+            });
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+
+            // 初期表示時の編集モードクラス設定を変更
+            if (isEditMode) {
+                document.body.classList.add('edit-mode');
+            } else {
+                document.body.classList.remove('edit-mode');
+            }
+
+            // 編集モードボタンのアイコンを設定
+            document.getElementById('toggle-edit').innerHTML = isEditMode ? '<i class="fa fa-edit"></i>' : '<i class="fa fa-eye"></i>';
+
+            // 初期表示時のイベントを無効化
+            document.querySelectorAll('#summary, #date-range, #generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
+                element.disabled = !isEditMode;
+            });
+
+            // 初期表示時のスタイルを設定
+            document.querySelectorAll('#date-range, #generateButton, .add-event-button, .delete-button').forEach(element => {
+                element.style.display = isEditMode ? 'inline-block' : 'none';
+            });
+
+            // 初期表示時のカーソルスタイルを設定
+            document.querySelectorAll('.event-header').forEach(header => {
+                header.style.cursor = isEditMode ? 'pointer' : 'default';
+            });
+
+            // 入力が何もされていない場合にアニメーション追加
+            const itinerary = localStorage.getItem('itinerary');
+            if (!itinerary || (JSON.parse(itinerary).events && JSON.parse(itinerary).events.length === 0)) {
+                document.getElementById('toggle-edit').classList.add('pulse-animation');
+            }
+
+            loadEvents();
+
+            adjustTimelineLine();
+        });
+
+        function handleDateSelection(selectedDates) {
+            if (selectedDates.length === 2) {
+                document.getElementById('start-date').value = selectedDates[0].toISOString().substring(0, 10);
+                document.getElementById('end-date').value = selectedDates[1].toISOString().substring(0, 10);
+            }
+        }
+
+        function generateEvents() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (!startDate || !endDate) {
+                alert("Please select a date range.");
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            if (start > end) {
+                alert("End date should be after start date.");
+                return;
+            }
+
+            const eventList = document.querySelector('.event-list');
+            eventList.innerHTML = ''; // Clear previous events
+
+            const timelineLine = document.createElement('div');
+            timelineLine.classList.add('timeline-line');
+            eventList.appendChild(timelineLine);
+
+            let eventNumber = 1;
+            for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
+                const eventDiv = createEventDiv(eventNumber, d);
+                eventList.appendChild(eventDiv);
+                eventNumber++;
+            }
+
+            adjustTimelineLine();
+        }
+
+        function createEventDiv(eventNumber, date, title = '', details = []) {
+            const eventDiv = document.createElement('div');
+            eventDiv.classList.add('event');
+            eventDiv.setAttribute('role', 'listitem');
+
+            const eventHeader = document.createElement('div');
+            eventHeader.classList.add('event-header');
+
+            const eventHeaderTop = document.createElement('div');
+            eventHeaderTop.classList.add('event-header-top');
+            eventHeaderTop.addEventListener('click', function () {
+                toggleEvent(eventNumber);
+            });
+
+            const eventIcon = document.createElement('span');
+            eventIcon.classList.add('event-icon', 'fa', 'fa-caret-right');
+            eventIcon.setAttribute('id', `icon-${eventNumber}`);
+
+            const eventDot = document.createElement('span');
+            eventDot.classList.add('event-dot');
+
+            const eventTitle = document.createElement('span');
+            eventTitle.classList.add('event-title');
+            eventTitle.textContent = `${date.toDateString()}`;
+
+            eventHeaderTop.append(eventIcon, eventDot, eventTitle);
+
+            const eventHeaderBottom = document.createElement('div');
+            eventHeaderBottom.classList.add('event-header-bottom');
+            const textBox = document.createElement('input');
+            textBox.type = 'text';
+            textBox.id = `textbox-${eventNumber}`;
+            textBox.placeholder = 'Enter day title';
+            textBox.value = title;
+
+            eventHeaderBottom.appendChild(textBox);
+
+            eventHeader.append(eventHeaderTop, eventHeaderBottom);
+
+            const eventContent = document.createElement('div');
+            eventContent.classList.add('event-content');
+            eventContent.setAttribute('id', `content-${eventNumber}`);
+
+            // Create the textarea
+            const eventTextarea = document.createElement('textarea');
+            eventTextarea.classList.add('event-textarea');
+            eventTextarea.placeholder = 'Enter event details';
+            eventTextarea.rows = 3;
+
+            // Create the Add Event button
+            const addEventButton = document.createElement('button');
+            addEventButton.classList.add('add-event-button');
+            addEventButton.innerHTML = '<i class="fa-solid fa-circle-plus"></i>';
+            addEventButton.addEventListener('click', function () {
+                addEventDetail(eventContent, eventNumber);
+            });
+
+            // Append the textarea and Add Event button to the event content
+            eventContent.appendChild(eventTextarea);
+            eventContent.appendChild(addEventButton);
+
+            // If there are details, add them
+            if (details.length > 0) {
+                details.forEach(detail => {
+                    addEventDetail(eventContent, eventNumber, detail.time, detail.name, detail.comment);
+                });
+            }
+
+            eventDiv.append(eventHeader, eventContent);
+
+            new Sortable(eventContent, {
+                group: 'events',
+                animation: 150,
+                delay: 500,
+                onEnd: adjustTimelineLine,
+                draggable: '.event-detail:not(.add-event-button)'
+            });
+
+            return eventDiv;
+        }
+
+        function toggleEvent(eventNumber) {
+            const content = document.getElementById(`content-${eventNumber}`);
+            const icon = document.getElementById(`icon-${eventNumber}`);
+            const isOpen = content.classList.contains('open');
+
+            content.classList.toggle('open', !isOpen);
+
+            // アイコンのクラスの切り替え
+            if (isOpen) {
+                icon.classList.remove('fa-caret-down');
+                icon.classList.add('fa-caret-right');
+            } else {
+                icon.classList.remove('fa-caret-right');
+                icon.classList.add('fa-caret-down');
+            }
+
+            // タイムラインの調整を即座に実行
+            setTimeout(adjustTimelineLine, 0);
+        }
+
+        function addEventDetail(eventContent, eventNumber, time = '00:00', name = '', comment = '') {
+            const eventDetail = document.createElement('div');
+            eventDetail.classList.add('event-detail');
+
+            const eventUpperRow = document.createElement('div');
+            eventUpperRow.classList.add('event-upper-row');
+
+            const eventTime = document.createElement('input');
+            eventTime.type = 'text';
+            eventTime.value = time;
+            eventTime.classList.add('event-time');
+            eventTime.setAttribute('aria-label', 'Event time');
+
+            const eventName = document.createElement('input');
+            eventName.type = 'text';
+            eventName.placeholder = 'Event name';
+            eventName.classList.add('event-name');
+            eventName.setAttribute('aria-label', 'Event name');
+            eventName.value = name;
+
+            const deleteEventButton = document.createElement('button');
+            deleteEventButton.classList.add('delete-button');
+            deleteEventButton.innerHTML = '<i class="fa-solid fa-delete-left"></i>';
+            deleteEventButton.addEventListener('click', function () {
+                eventContent.removeChild(eventDetail);
+                adjustTimelineLine(); // Call after deleting an event
+            });
+
+            // Append elements to the upper row
+            eventUpperRow.append(eventTime, eventName, deleteEventButton);
+
+            // Create and append eventComment for the lower row
+            const eventComment = document.createElement('textarea');
+            eventComment.classList.add('event-comment');
+            eventComment.placeholder = 'Enter comment';
+            eventComment.rows = 2;
+            eventComment.value = comment;
+
+            // Append upper row and comment to the event detail
+            eventDetail.append(eventUpperRow, eventComment);
+            eventContent.appendChild(eventDetail);
+
+            flatpickr(eventTime, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true
+            });
+
+            adjustTimelineLine(); // Call after adding an event detail
+        }
+
+        function adjustTimelineLine() {
+            const eventList = document.querySelector('.event-list');
+            const events = document.querySelectorAll('.event');
+            const timelineLine = document.querySelector('.timeline-line');
+            if (events.length > 0) {
+                const firstEventDot = events[0].querySelector('.event-dot');
+                const lastEventDot = events[events.length - 1].querySelector('.event-dot');
+                const firstEventDotTop = firstEventDot.getBoundingClientRect().top + window.scrollY;
+                const lastEventDotTop = lastEventDot.getBoundingClientRect().top + window.scrollY;
+
+                const eventListTop = eventList.getBoundingClientRect().top + window.scrollY;
+                const lineTop = firstEventDotTop - eventListTop + (firstEventDot.offsetHeight / 2);
+                const lineHeight = lastEventDotTop - firstEventDotTop + (firstEventDot.offsetHeight / 2);
+
+                timelineLine.style.top = `${lineTop}px`;
+                timelineLine.style.height = `${lineHeight}px`;
+                timelineLine.style.left = `${firstEventDot.offsetLeft + (firstEventDot.offsetWidth / 2) - (timelineLine.offsetWidth / 2)}px`;
+            } else {
+                timelineLine.style.height = '0px';
+            }
+        }
+
+        window.addEventListener('load', adjustTimelineLine);
+        window.addEventListener('resize', adjustTimelineLine);
+
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            document.getElementById('toggle-edit').innerHTML = isEditMode ? '<i class="fa fa-edit"></i>' : '<i class="fa fa-eye"></i>';
+
+            // Toggle the disabled property for inputs and buttons
+            document.querySelectorAll('#summary, #date-range, #generateButton').forEach(element => {
+                element.disabled = !isEditMode;
+            });
+
+            // Change the display style based on the mode
+            document.querySelectorAll('#date-range, #generateButton').forEach(element => {
+                element.style.display = isEditMode ? 'inline-block' : 'none';
+            });
+
+            // Change the cursor style for event headers
+            document.querySelectorAll('.event-header').forEach(header => {
+                header.style.cursor = isEditMode ? 'pointer' : 'default';
+            });
+
+            // Add or remove the edit-mode class on the body
+            if (isEditMode) {
+                document.body.classList.add('edit-mode');
+            } else {
+                document.body.classList.remove('edit-mode');
+            }
+            // クリックされたらアニメーションを削除
+            document.getElementById('toggle-edit').classList.remove('pulse-animation');
+
+            adjustTimelineLine();
+        }
+
+        function toggleAllEvents() {
+            const eventContents = document.querySelectorAll('.event-content');
+            const eventIcons = document.querySelectorAll('.event-icon');
+            const toggleButtonIcon = document.getElementById('toggle-all-events').firstChild;
+            let allOpen = true;
+
+            // Check if all events are open
+            eventContents.forEach(content => {
+                if (!content.classList.contains('open')) {
+                    allOpen = false;
+                }
+            });
+
+            eventContents.forEach((content, index) => {
+                const icon = eventIcons[index];
+                if (allOpen) {
+                    content.classList.remove('open');
+                    icon.classList.remove('fa-caret-down');
+                    icon.classList.add('fa-caret-right');
+                } else {
+                    content.classList.add('open');
+                    icon.classList.remove('fa-caret-right');
+                    icon.classList.add('fa-caret-down');
+                }
+            });
+
+            if (allOpen) {
+                toggleButtonIcon.classList.remove('fa-angle-double-up');
+                toggleButtonIcon.classList.add('fa-angle-double-down');
+            } else {
+                toggleButtonIcon.classList.remove('fa-angle-double-down');
+                toggleButtonIcon.classList.add('fa-angle-double-up');
+            }
+
+            adjustTimelineLine(); // Adjust the timeline line after toggling all events
+        }
+
+        function resetEvents() {
+            if (confirm("Are you sure you want to reset all events?")) {
+                document.querySelector('.event-list').innerHTML = '<div class="timeline-line"></div>';
+                document.getElementById('start-date').value = '';
+                document.getElementById('end-date').value = '';
+                document.getElementById('summary').value = '';
+                localStorage.removeItem('itinerary');
+            }
+        }
+
+        function saveEvents() {
+            const events = [];
+            document.querySelectorAll('.event').forEach(event => {
+                const date = event.querySelector('.event-title').textContent;
+                const title = event.querySelector('.event-header-bottom input[type="text"]').value;
+                const details = [];
+                const eventTextarea = event.querySelector('.event-textarea').value; // event-textareaの内容を取得
+                event.querySelectorAll('.event-detail').forEach(detail => {
+                    const time = detail.querySelector('.event-time').value;
+                    const name = detail.querySelector('.event-name').value;
+                    const comment = detail.querySelector('.event-comment').value;
+                    details.push({ time, name, comment });
+                });
+                events.push({ date, title, details, text: eventTextarea }); // eventTextareaを保存
+            });
+            const data = {
+                summary: document.getElementById('summary').value,
+                events
+            };
+            localStorage.setItem('itinerary', JSON.stringify(data));
+            alert('Events saved successfully!');
+        }
+
+        function shareEvents() {
+            const data = localStorage.getItem('itinerary');
+            if (data) {
+                const url = `${window.location.href.split('?')[0]}?data=${encodeURIComponent(data)}`;
+                prompt('Share this URL:', url);
+            } else {
+                alert('No events to share. Please save events first.');
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        function loadEvents() {
+            const savedData = localStorage.getItem('itinerary');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('summary').value = data.summary;
+
+                const eventList = document.querySelector('.event-list');
+                eventList.innerHTML = ''; // Clear previous events
+
+                const timelineLine = document.createElement('div');
+                timelineLine.classList.add('timeline-line');
+                eventList.appendChild(timelineLine);
+
+                let eventNumber = 1;
+                data.events.forEach(event => {
+                    const eventDate = new Date(event.date);
+                    const eventDiv = createEventDiv(eventNumber, eventDate, event.title, event.details);
+                    eventDiv.querySelector('.event-textarea').value = event.text || ''; // event-textareaの内容を設定
+                    eventList.appendChild(eventDiv);
+                    eventNumber++;
+                });
+
+                adjustTimelineLine();
+            }
+        }
+    </script>
+</body>
+
+</html>
