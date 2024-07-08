@@ -272,7 +272,8 @@
             border: none;
             border-radius: 5px;
             width: calc(100% - 82px);
-            margin: 0 39px 0 55px;
+            height: 45px;
+            margin: 0 39px 5px 55px;
             padding: 4px 8px;
         }
 
@@ -321,9 +322,11 @@
         }
 
         @keyframes pulse {
-            0%, 100% {
+            0%,
+            100% {
                 transform: rotate(30deg);
             }
+
             50% {
                 transform: rotate(-30deg);
             }
@@ -332,7 +335,74 @@
         .hidden {
             display: none;
         }
-    </style>
+
+        /* The Modal (background) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            color: var(--primary)
+        }
+
+        /* Modal Content/Box */
+        .modal-content {
+            font-size: 16px;
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 10px;
+            border: 1px solid #888;
+            border-radius: 5px;
+            width: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            text-align: center;
+            color: #333;
+        }
+
+        .modal-content .close {
+            position: absolute;
+            top: 0;
+            right: 10px;
+        }
+
+        .modal-content p, 
+        .modal-content input, 
+        .modal-content button {
+            margin: 5px 0;
+            padding: 2px;
+        }
+      
+        .modal-content input {
+            font-size: 16px;
+            width: 70%;
+            text-align: center;
+        }
+
+        /* The Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+  </style>
 </head>
 
 <body data-theme="light">
@@ -342,11 +412,11 @@
     <main>
         <textarea id="summary" name="summary" rows="3" cols="40" maxlength="77" placeholder="Summary"></textarea>
         <div class="control-buttons">
-            <button id="toggle-edit" onclick="toggleEditMode()"><i class="fa fa-eye"></i></button>
             <button id="toggle-all-events" onclick="toggleAllEvents()"><i class="fa fa-angle-double-down"></i></button>
-            <button id="reset-button" onclick="resetEvents()"><i class="fa fa-undo"></i></button>
             <button id="save-button" onclick="saveEvents()"><i class="fa fa-save"></i></button>
             <button id="share-button" onclick="shareEvents()"><i class="fa fa-share-alt"></i></button>
+            <button id="toggle-edit" onclick="toggleEditMode()"><i class="fa fa-eye"></i></button>
+            <button id="reset-button" onclick="resetEvents()"><i class="fa fa-undo"></i></button>            
             <button id="toggle-theme" onclick="toggleTheme()"><i class="fa fa-adjust"></i></button>
         </div>
         <section class="input-group">
@@ -360,11 +430,58 @@
         </section>
     </main>
     <footer>
-        Copyright © 2024 travelitinerary Web Page. All rights reserved.
+        Copyright © 2024 sakokeisuke Web Page. All rights reserved.
     </footer>
+
+    <!-- Password Modal -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Password:</p>
+            <input type="password" id="passwordInput" />
+            <button id="confirmPasswordButton">OK</button>
+        </div>
+    </div>
+
+
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
     <script>
+        const correctPassword = "777"; // Set your desired password here
+
+        // Get modal elements
+        const passwordModal = document.getElementById("passwordModal");
+        const passwordInput = document.getElementById("passwordInput");
+        const confirmPasswordButton = document.getElementById("confirmPasswordButton");
+        const closeModal = document.querySelector(".modal .close");
+
+        function showPasswordModal(callback) {
+            passwordModal.style.display = "block";
+
+            confirmPasswordButton.onclick = function () {
+                const enteredPassword = passwordInput.value;
+                if (enteredPassword === correctPassword) {
+                    passwordModal.style.display = "none";
+                    passwordInput.value = "";
+                    callback();
+                } else {
+                    alert("Incorrect password. Please try again.");
+                }
+            };
+        }
+
+        // Close the modal when the user clicks on <span> (x)
+        closeModal.onclick = function () {
+            passwordModal.style.display = "none";
+        };
+
+        // Close the modal when the user clicks anywhere outside of the modal
+        window.onclick = function (event) {
+            if (event.target == passwordModal) {
+                passwordModal.style.display = "none";
+            }
+        };
+
         let isEditMode = false;
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -385,32 +502,26 @@
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
 
-            // 初期表示時の編集モードクラス設定を変更
             if (isEditMode) {
                 document.body.classList.add('edit-mode');
             } else {
                 document.body.classList.remove('edit-mode');
             }
 
-            // 編集モードボタンのアイコンを設定
             document.getElementById('toggle-edit').innerHTML = isEditMode ? '<i class="fa fa-edit"></i>' : '<i class="fa fa-eye"></i>';
 
-            // 初期表示時のイベントを無効化
             document.querySelectorAll('#summary, #date-range, #generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
                 element.disabled = !isEditMode;
             });
 
-            // 初期表示時のスタイルを設定
             document.querySelectorAll('#date-range, #generateButton, .add-event-button, .delete-button').forEach(element => {
                 element.style.display = isEditMode ? 'inline-block' : 'none';
             });
 
-            // 初期表示時のカーソルスタイルを設定
             document.querySelectorAll('.event-header').forEach(header => {
                 header.style.cursor = isEditMode ? 'pointer' : 'default';
             });
 
-            // 入力が何もされていない場合にアニメーション追加
             const itinerary = localStorage.getItem('itinerary');
             if (!itinerary || (JSON.parse(itinerary).events && JSON.parse(itinerary).events.length === 0)) {
                 document.getElementById('toggle-edit').classList.add('pulse-animation');
@@ -550,7 +661,6 @@
 
             content.classList.toggle('open', !isOpen);
 
-            // アイコンのクラスの切り替え
             if (isOpen) {
                 icon.classList.remove('fa-caret-down');
                 icon.classList.add('fa-caret-right');
@@ -559,7 +669,6 @@
                 icon.classList.add('fa-caret-down');
             }
 
-            // タイムラインの調整を即座に実行
             setTimeout(adjustTimelineLine, 0);
         }
 
@@ -588,20 +697,17 @@
             deleteEventButton.innerHTML = '<i class="fa-solid fa-delete-left"></i>';
             deleteEventButton.addEventListener('click', function () {
                 eventContent.removeChild(eventDetail);
-                adjustTimelineLine(); // Call after deleting an event
+                adjustTimelineLine();
             });
 
-            // Append elements to the upper row
             eventUpperRow.append(eventTime, eventName, deleteEventButton);
 
-            // Create and append eventComment for the lower row
             const eventComment = document.createElement('textarea');
             eventComment.classList.add('event-comment');
             eventComment.placeholder = 'Enter comment';
             eventComment.rows = 2;
             eventComment.value = comment;
 
-            // Append upper row and comment to the event detail
             eventDetail.append(eventUpperRow, eventComment);
             eventContent.appendChild(eventDetail);
 
@@ -612,7 +718,7 @@
                 time_24hr: true
             });
 
-            adjustTimelineLine(); // Call after adding an event detail
+            adjustTimelineLine();
         }
 
         function adjustTimelineLine() {
@@ -641,37 +747,44 @@
         window.addEventListener('resize', adjustTimelineLine);
 
         function toggleEditMode() {
-            isEditMode = !isEditMode;
+            if (!isEditMode) {
+                showPasswordModal(function() {
+                    isEditMode = true;
+                    applyEditMode();
+                });
+            } else {
+                isEditMode = false;
+                applyEditMode();
+            }
+        }
+
+        function applyEditMode() {
             document.getElementById('toggle-edit').innerHTML = isEditMode ? '<i class="fa fa-edit"></i>' : '<i class="fa fa-eye"></i>';
 
-            // Toggle the disabled property for inputs and buttons
             document.querySelectorAll('#summary, #date-range, #generateButton').forEach(element => {
                 element.disabled = !isEditMode;
             });
 
-            // Change the display style based on the mode
             document.querySelectorAll('#date-range, #generateButton').forEach(element => {
                 element.style.display = isEditMode ? 'inline-block' : 'none';
             });
 
-            // Change the cursor style for event headers
             document.querySelectorAll('.event-header').forEach(header => {
                 header.style.cursor = isEditMode ? 'pointer' : 'default';
             });
 
-            // Add or remove the edit-mode class on the body
             if (isEditMode) {
                 document.body.classList.add('edit-mode');
             } else {
                 document.body.classList.remove('edit-mode');
             }
-            // クリックされたらアニメーションを削除
+
             document.getElementById('toggle-edit').classList.remove('pulse-animation');
 
             adjustTimelineLine();
         }
 
-        function toggleAllEvents() {
+                function toggleAllEvents() {
             const eventContents = document.querySelectorAll('.event-content');
             const eventIcons = document.querySelectorAll('.event-icon');
             const toggleButtonIcon = document.getElementById('toggle-all-events').firstChild;
@@ -706,16 +819,18 @@
             }
 
             adjustTimelineLine(); // Adjust the timeline line after toggling all events
-        }
-
+        }  
+      
         function resetEvents() {
-            if (confirm("Are you sure you want to reset all events?")) {
-                document.querySelector('.event-list').innerHTML = '<div class="timeline-line"></div>';
-                document.getElementById('start-date').value = '';
-                document.getElementById('end-date').value = '';
-                document.getElementById('summary').value = '';
-                localStorage.removeItem('itinerary');
-            }
+            showPasswordModal(function () {
+                if (confirm("Are you sure you want to reset all events?")) {
+                    document.querySelector('.event-list').innerHTML = '<div class="timeline-line"></div>';
+                    document.getElementById('start-date').value = '';
+                    document.getElementById('end-date').value = '';
+                    document.getElementById('summary').value = '';
+                    localStorage.removeItem('itinerary');
+                }
+            });
         }
 
         function saveEvents() {
@@ -724,14 +839,14 @@
                 const date = event.querySelector('.event-title').textContent;
                 const title = event.querySelector('.event-header-bottom input[type="text"]').value;
                 const details = [];
-                const eventTextarea = event.querySelector('.event-textarea').value; // event-textareaの内容を取得
+                const eventTextarea = event.querySelector('.event-textarea').value;
                 event.querySelectorAll('.event-detail').forEach(detail => {
                     const time = detail.querySelector('.event-time').value;
                     const name = detail.querySelector('.event-name').value;
                     const comment = detail.querySelector('.event-comment').value;
                     details.push({ time, name, comment });
                 });
-                events.push({ date, title, details, text: eventTextarea }); // eventTextareaを保存
+                events.push({ date, title, details, text: eventTextarea });
             });
             const data = {
                 summary: document.getElementById('summary').value,
@@ -775,7 +890,7 @@
                 data.events.forEach(event => {
                     const eventDate = new Date(event.date);
                     const eventDiv = createEventDiv(eventNumber, eventDate, event.title, event.details);
-                    eventDiv.querySelector('.event-textarea').value = event.text || ''; // event-textareaの内容を設定
+                    eventDiv.querySelector('.event-textarea').value = event.text || '';
                     eventList.appendChild(eventDiv);
                     eventNumber++;
                 });
