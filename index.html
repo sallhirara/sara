@@ -90,6 +90,7 @@
         }
 
         #summary {
+            resize: none;
             font-size: var(--font-size-large);
             color: var(--font-color);
             text-align: center;
@@ -99,8 +100,6 @@
             border-radius: 5px;
             max-width: 400px;
             min-width: 100px;
-            max-height: 68px;
-            min-height: 40px;
             background-color: var(--background-color);
         }
 
@@ -245,6 +244,7 @@
             padding: 5px;
             width: 100%;
             margin-bottom: 10px;
+            min-height: 50px;
         }
 
         .event-time {
@@ -275,7 +275,7 @@
             border: none;
             border-radius: 5px;
             width: calc(100% - 82px);
-            height: 45px;
+            min-height: 30px;
             margin: 0 39px 5px 55px;
             padding: 4px 8px;
         }
@@ -479,7 +479,7 @@
     </div>
 
     <main>
-        <textarea id="summary" name="summary" rows="3" cols="40" maxlength="77" placeholder="Summary"></textarea>
+        <textarea id="summary" name="summary" rows="2" cols="40" maxlength="77" placeholder="Summary"></textarea>
         <div class="control-buttons">
             <button id="toggle-all-events" onclick="toggleAllEvents()"><i class="fa fa-angle-double-down"></i></button>
             <button id="save-button"><i class="fa fa-save"></i></button>
@@ -747,7 +747,7 @@
             const eventTextarea = document.createElement('textarea');
             eventTextarea.classList.add('event-textarea');
             eventTextarea.placeholder = 'Enter event details';
-            eventTextarea.rows = 3;
+            eventTextarea.rows = 2;
 
             // Create the Add Event button
             const addEventButton = document.createElement('button');
@@ -778,7 +778,23 @@
                 draggable: '.event-detail:not(.add-event-button)'
             });
 
+            // Add auto resize listener to all textareas including event-comment
+            eventContent.querySelectorAll('textarea').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                    adjustTimelineLine();
+                });
+                // Initial size adjustment
+                autoResizeTextarea(textarea);
+            });
+
             return eventDiv;
+        }
+
+        // Auto resize function
+        function autoResizeTextarea(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = (textarea.scrollHeight) + 'px';
         }
 
         function toggleEvent(eventNumber) {
@@ -832,8 +848,17 @@
             const eventComment = document.createElement('textarea');
             eventComment.classList.add('event-comment');
             eventComment.placeholder = 'Enter comment';
-            eventComment.rows = 2;
+            eventComment.rows = 1;
             eventComment.value = comment;
+
+            // 自動リサイズのイベントリスナーを追加
+            eventComment.addEventListener('input', function() {
+                autoResizeTextarea(this);
+                adjustTimelineLine();
+            });
+        
+            // 初期サイズ調整
+            autoResizeTextarea(eventComment);            
 
             eventDetail.append(eventUpperRow, eventComment);
             eventContent.appendChild(eventDetail);
@@ -869,6 +894,36 @@
                 timelineLine.style.height = '0px';
             }
         }
+
+        // Initialize and add listeners to existing textareas (if any)
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.event-comment').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                    adjustTimelineLine();
+                });
+                autoResizeTextarea(textarea);
+            });
+            // summaryのテキストエリアにリスナーを追加
+            const summaryTextarea = document.getElementById('summary');
+            summaryTextarea.addEventListener('input', function() {
+                autoResizeTextarea(this);
+                adjustTimelineLine();
+            });
+            // 初期サイズ調整
+            autoResizeTextarea(summaryTextarea);
+        
+            // event commentのテキストエリアにリスナーを追加
+            document.querySelectorAll('.event-comment').forEach(textarea => {
+                textarea.addEventListener('input', function() {
+                    autoResizeTextarea(this);
+                    adjustTimelineLine();
+                });
+                // 初期サイズ調整
+                autoResizeTextarea(textarea);
+            });
+
+        });
 
         window.addEventListener('load', adjustTimelineLine);
         window.addEventListener('resize', adjustTimelineLine);
