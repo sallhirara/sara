@@ -575,7 +575,7 @@
 
             document.getElementById('toggle-edit').innerHTML = isEditMode ? '<i class="fa fa-edit"></i>' : '<i class="fa fa-eye"></i>';
 
-            document.querySelectorAll('#generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
+            document.querySelectorAll('#summary, #generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
                 element.disabled = !isEditMode;
             });
 
