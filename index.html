@@ -31,6 +31,7 @@
         }
 
         #summary,
+        #newItinerary input,
         #date-range,
         .event-textarea,
         .event-time,
@@ -41,6 +42,7 @@
         }
 
         .edit-mode #summary,
+        .edit-mode #newItinerary input,
         .edit-mode #date-range,
         .edit-mode .event-textarea,
         .edit-mode .event-time,
@@ -109,6 +111,7 @@
             gap: 10px;
         }
 
+        #newItinerary input,
         #date-range {
             font-family: 'Arial, Helvetica, sans-serif';
             font-size: var(--font-size-base);
@@ -375,13 +378,13 @@
             right: 10px;
         }
 
-        .modal-content p, 
-        .modal-content input, 
+        .modal-content p,
+        .modal-content input,
         .modal-content button {
             margin: 5px 0;
             padding: 2px;
         }
-      
+
         .modal-content input {
             font-size: 16px;
             width: 70%;
@@ -402,28 +405,91 @@
             cursor: pointer;
         }
 
-  </style>
+        #openItinerary {
+            text-align: center;
+            margin: auto;
+        }
+        
+        .edit-mode #openItinerary {
+            width: 100%;
+        }
+
+        #openItinerary label {
+            display: block;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        #newItinerary {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            text-align: center;
+            width: 100%;  /* 幅を設定 */
+        }
+        #loadItinerary {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+            text-align: center;
+            width: 100%;  /* 幅を設定 */
+        }
+
+        #newItinerary input,
+        #loadItinerary select,
+        #loadItinerary button {
+            margin: 5px 0;  /* 上下の余白を追加 */
+        }
+
+    </style>
 </head>
 
 <body data-theme="light">
     <header>
-        <h1>ITINERARY</h1>
+        <h1 id="itinerary-title">ITINERARY</h1>
     </header>
-    <main>
-        <textarea id="summary" name="summary" rows="3" cols="40" maxlength="77" placeholder="Summary"></textarea>
-        <div class="control-buttons">
-            <button id="toggle-all-events" onclick="toggleAllEvents()"><i class="fa fa-angle-double-down"></i></button>
-            <button id="save-button" onclick="saveEvents()"><i class="fa fa-save"></i></button>
-            <button id="share-button" onclick="shareEvents()"><i class="fa fa-share-alt"></i></button>
-            <button id="toggle-edit" onclick="toggleEditMode()"><i class="fa fa-eye"></i></button>
-            <button id="reset-button" onclick="resetEvents()"><i class="fa fa-undo"></i></button>            
-            <button id="toggle-theme" onclick="toggleTheme()"><i class="fa fa-adjust"></i></button>
-        </div>
-        <section class="input-group">
+
+    <div id="openItinerary">
+        <label>
+            <input type="radio" name="itineraryOption" value="new"> New Itinerary
+        </label>
+        <label>
+            <input type="radio" name="itineraryOption" value="load"> Load Itinerary
+        </label>
+
+        <div id="newItinerary" class="hidden">
+            <input type="text" id="itineraryTitle" placeholder="itineraryTitle">
             <input type="text" id="date-range" aria-label="Select Date Range" placeholder="Select Date Range">
             <input type="hidden" id="start-date">
             <input type="hidden" id="end-date">
             <button onclick="generateEvents()" id="generateButton"><i class="fa-solid fa-check-double"></i></button>
+            <button id="createItineraryButton">Create New Itinerary</button>
+        </div>
+
+        <div id="loadItinerary" class="hidden">
+            <select id="savedItineraries"></select>
+            <button id="loadButton">Load</button>
+            <button id="deleteButton">Delete</button>
+        </div>
+    </div>
+
+    <main>
+        <textarea id="summary" name="summary" rows="3" cols="40" maxlength="77" placeholder="Summary"></textarea>
+        <div class="control-buttons">
+            <button id="toggle-all-events" onclick="toggleAllEvents()"><i class="fa fa-angle-double-down"></i></button>
+            <button id="save-button"><i class="fa fa-save"></i></button>
+            <button id="share-button" onclick="shareEvents()"><i class="fa fa-share-alt"></i></button>
+            <button id="toggle-edit" onclick="toggleEditMode()"><i class="fa fa-eye"></i></button>
+            <button id="reset-button" onclick="resetEvents()"><i class="fa fa-undo"></i></button>
+            <button id="toggle-theme" onclick="toggleTheme()"><i class="fa fa-adjust"></i></button>
+        </div>
+        <section class="input-group">
+            <!-- Removed date-range and generateButton from here -->
         </section>
         <section class="event-list" role="list">
             <div class="timeline-line"></div>
@@ -443,7 +509,6 @@
         </div>
     </div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
     <script>
@@ -458,7 +523,7 @@
         function showPasswordModal(callback) {
             passwordModal.style.display = "block";
 
-            confirmPasswordButton.onclick = function () {
+            confirmPasswordButton.onclick = function() {
                 const enteredPassword = passwordInput.value;
                 if (enteredPassword === correctPassword) {
                     passwordModal.style.display = "none";
@@ -471,12 +536,12 @@
         }
 
         // Close the modal when the user clicks on <span> (x)
-        closeModal.onclick = function () {
+        closeModal.onclick = function() {
             passwordModal.style.display = "none";
         };
 
         // Close the modal when the user clicks anywhere outside of the modal
-        window.onclick = function (event) {
+        window.onclick = function(event) {
             if (event.target == passwordModal) {
                 passwordModal.style.display = "none";
             }
@@ -484,7 +549,7 @@
 
         let isEditMode = false;
 
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             flatpickr("#date-range", {
                 mode: "range",
                 dateFormat: "Y-m-d",
@@ -510,11 +575,11 @@
 
             document.getElementById('toggle-edit').innerHTML = isEditMode ? '<i class="fa fa-edit"></i>' : '<i class="fa fa-eye"></i>';
 
-            document.querySelectorAll('#summary, #date-range, #generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
+            document.querySelectorAll('#generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
                 element.disabled = !isEditMode;
             });
 
-            document.querySelectorAll('#date-range, #generateButton, .add-event-button, .delete-button').forEach(element => {
+            document.querySelectorAll('#openItinerary, #date-range, #generateButton, .add-event-button, .delete-button').forEach(element => {
                 element.style.display = isEditMode ? 'inline-block' : 'none';
             });
 
@@ -530,6 +595,63 @@
             loadEvents();
 
             adjustTimelineLine();
+
+            // ページ読み込み時にnewItineraryとloadItineraryを非表示に設定
+            document.getElementById('newItinerary').style.display = 'none';
+            document.getElementById('loadItinerary').style.display = 'none';
+            // しおり削除ボタンのリスナー
+            document.getElementById('deleteButton').addEventListener('click', function() {
+                const selectedItinerary = document.getElementById('savedItineraries').value;
+                if (confirm(`Are you sure you want to delete the itinerary "${selectedItinerary}"?`)) {
+                    localStorage.removeItem(selectedItinerary);
+                    loadSavedItineraries();
+                }
+            });            
+        });
+
+        document.querySelectorAll('input[name="itineraryOption"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                resetAll();
+                if (this.value === 'new') {
+                    document.getElementById('newItinerary').style.display = 'flex';
+                    document.getElementById('loadItinerary').style.display = 'none';
+                } else if (this.value === 'load') {
+                    document.getElementById('loadItinerary').style.display = 'flex';
+                    document.getElementById('newItinerary').style.display = 'none';
+                    loadSavedItineraries();
+                }
+            });
+        });
+
+        document.getElementById('createItineraryButton').addEventListener('click', function() {
+            const title = document.getElementById('itineraryTitle').value;
+            if (title) {
+                saveEvents(title);
+                document.getElementById('itinerary-title').textContent = title;
+            } else {
+                alert('Please enter a title for the itinerary.');
+            }
+        });
+
+        document.getElementById('save-button').addEventListener('click', function() {
+            const title = document.getElementById('itineraryTitle').value || 'itinerary';
+            saveEvents(title);
+        });
+
+        document.getElementById('loadButton').addEventListener('click', function() {
+            const selectedItinerary = document.getElementById('savedItineraries').value;
+            loadEvents(selectedItinerary);
+            document.getElementById('itinerary-title').textContent = selectedItinerary;
+        });
+
+        // イベント削除ボタンのリスナー
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('delete-button')) {
+                const eventContent = event.target.closest('.event-content');
+                const eventDetail = event.target.closest('.event-detail');
+                eventContent.removeChild(eventDetail);
+                adjustTimelineLine();
+            }
         });
 
         function handleDateSelection(selectedDates) {
@@ -583,7 +705,7 @@
 
             const eventHeaderTop = document.createElement('div');
             eventHeaderTop.classList.add('event-header-top');
-            eventHeaderTop.addEventListener('click', function () {
+            eventHeaderTop.addEventListener('click', function() {
                 toggleEvent(eventNumber);
             });
 
@@ -626,7 +748,7 @@
             const addEventButton = document.createElement('button');
             addEventButton.classList.add('add-event-button');
             addEventButton.innerHTML = '<i class="fa-solid fa-circle-plus"></i>';
-            addEventButton.addEventListener('click', function () {
+            addEventButton.addEventListener('click', function() {
                 addEventDetail(eventContent, eventNumber);
             });
 
@@ -695,7 +817,7 @@
             const deleteEventButton = document.createElement('button');
             deleteEventButton.classList.add('delete-button');
             deleteEventButton.innerHTML = '<i class="fa-solid fa-delete-left"></i>';
-            deleteEventButton.addEventListener('click', function () {
+            deleteEventButton.addEventListener('click', function() {
                 eventContent.removeChild(eventDetail);
                 adjustTimelineLine();
             });
@@ -765,7 +887,7 @@
                 element.disabled = !isEditMode;
             });
 
-            document.querySelectorAll('#date-range, #generateButton').forEach(element => {
+            document.querySelectorAll('#openItinerary,#date-range, #generateButton').forEach(element => {
                 element.style.display = isEditMode ? 'inline-block' : 'none';
             });
 
@@ -784,7 +906,7 @@
             adjustTimelineLine();
         }
 
-                function toggleAllEvents() {
+        function toggleAllEvents() {
             const eventContents = document.querySelectorAll('.event-content');
             const eventIcons = document.querySelectorAll('.event-icon');
             const toggleButtonIcon = document.getElementById('toggle-all-events').firstChild;
@@ -819,10 +941,10 @@
             }
 
             adjustTimelineLine(); // Adjust the timeline line after toggling all events
-        }  
-      
+        }
+
         function resetEvents() {
-            showPasswordModal(function () {
+            showPasswordModal(function() {
                 if (confirm("Are you sure you want to reset all events?")) {
                     document.querySelector('.event-list').innerHTML = '<div class="timeline-line"></div>';
                     document.getElementById('start-date').value = '';
@@ -833,11 +955,11 @@
             });
         }
 
-        function saveEvents() {
+        function saveEvents(title) {
             const events = [];
             document.querySelectorAll('.event').forEach(event => {
                 const date = event.querySelector('.event-title').textContent;
-                const title = event.querySelector('.event-header-bottom input[type="text"]').value;
+                const eventTitle = event.querySelector('.event-header-bottom input[type="text"]').value;
                 const details = [];
                 const eventTextarea = event.querySelector('.event-textarea').value;
                 event.querySelectorAll('.event-detail').forEach(detail => {
@@ -846,13 +968,13 @@
                     const comment = detail.querySelector('.event-comment').value;
                     details.push({ time, name, comment });
                 });
-                events.push({ date, title, details, text: eventTextarea });
+                events.push({ date, title: eventTitle, details, text: eventTextarea });
             });
             const data = {
                 summary: document.getElementById('summary').value,
                 events
             };
-            localStorage.setItem('itinerary', JSON.stringify(data));
+            localStorage.setItem(title, JSON.stringify(data));
             alert('Events saved successfully!');
         }
 
@@ -873,8 +995,8 @@
             localStorage.setItem('theme', newTheme);
         }
 
-        function loadEvents() {
-            const savedData = localStorage.getItem('itinerary');
+        function loadEvents(title = 'itinerary') {
+            const savedData = localStorage.getItem(title);
             if (savedData) {
                 const data = JSON.parse(savedData);
                 document.getElementById('summary').value = data.summary;
@@ -897,6 +1019,27 @@
 
                 adjustTimelineLine();
             }
+        }
+
+        function loadSavedItineraries() {
+            const savedItineraries = Object.keys(localStorage);
+            const select = document.getElementById('savedItineraries');
+            select.innerHTML = '';
+            savedItineraries.forEach(title => {
+                const option = document.createElement('option');
+                option.value = title;
+                option.textContent = title;
+                select.appendChild(option);
+            });
+        }
+
+        function resetAll() {
+            document.getElementById('newItinerary').style.display = 'none';
+            document.getElementById('loadItinerary').style.display = 'none';
+            document.getElementById('summary').value = '';
+            document.querySelector('.event-list').innerHTML = '<div class="timeline-line"></div>';
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
         }
     </script>
 </body>
