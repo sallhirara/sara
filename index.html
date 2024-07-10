@@ -1021,17 +1021,23 @@
                 const date = event.querySelector('.event-title').textContent;
                 const eventTitle = event.querySelector('.event-header-bottom input[type="text"]').value;
                 const details = [];
-                const eventTextarea = event.querySelector('.event-textarea').value;
+                const eventTextarea = event.querySelector('.event-textarea');
+                const eventTextareaValue = eventTextarea.value;
+                const eventTextareaHeight = eventTextarea.style.height;
+            
                 event.querySelectorAll('.event-detail').forEach(detail => {
                     const time = detail.querySelector('.event-time').value;
                     const name = detail.querySelector('.event-name').value;
-                    const comment = detail.querySelector('.event-comment').value;
-                    details.push({ time, name, comment });
+                    const comment = detail.querySelector('.event-comment');
+                    const commentValue = comment.value;
+                    const commentHeight = comment.style.height;
+                    details.push({ time, name, comment: commentValue, commentHeight });
                 });
-                events.push({ date, title: eventTitle, details, text: eventTextarea });
+                events.push({ date, title: eventTitle, details, text: eventTextareaValue, textHeight: eventTextareaHeight });
             });
             const data = {
                 summary: document.getElementById('summary').value,
+                summaryHeight: document.getElementById('summary').style.height,
                 events
             };
             localStorage.setItem(title, JSON.stringify(data));
@@ -1059,24 +1065,33 @@
             const savedData = localStorage.getItem(title);
             if (savedData) {
                 const data = JSON.parse(savedData);
-                document.getElementById('summary').value = data.summary;
-
+                const summaryTextarea = document.getElementById('summary');
+                summaryTextarea.value = data.summary;
+                summaryTextarea.style.height = data.summaryHeight || 'auto';
+            
                 const eventList = document.querySelector('.event-list');
                 eventList.innerHTML = ''; // Clear previous events
-
+            
                 const timelineLine = document.createElement('div');
                 timelineLine.classList.add('timeline-line');
                 eventList.appendChild(timelineLine);
-
+            
                 let eventNumber = 1;
                 data.events.forEach(event => {
                     const eventDate = new Date(event.date);
                     const eventDiv = createEventDiv(eventNumber, eventDate, event.title, event.details);
-                    eventDiv.querySelector('.event-textarea').value = event.text || '';
+                    const eventTextarea = eventDiv.querySelector('.event-textarea');
+                    eventTextarea.value = event.text || '';
+                    eventTextarea.style.height = event.textHeight || 'auto';
+                    event.details.forEach((detail, index) => {
+                        const eventDetail = eventDiv.querySelectorAll('.event-detail')[index];
+                        const commentTextarea = eventDetail.querySelector('.event-comment');
+                        commentTextarea.style.height = detail.commentHeight || 'auto';
+                    });
                     eventList.appendChild(eventDiv);
                     eventNumber++;
                 });
-
+            
                 adjustTimelineLine();
             }
         }
