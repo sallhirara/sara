@@ -484,6 +484,7 @@
             <button id="toggle-all-events" onclick="toggleAllEvents()"><i class="fa fa-angle-double-down"></i></button>
             <button id="save-button"><i class="fa fa-save"></i></button>
             <button id="share-button" onclick="shareEvents()"><i class="fa fa-share-alt"></i></button>
+            <button id="outPut-button" onclick="outPutEvents()"><i class="fa-solid fa-arrow-up-from-bracket"></i></button>
             <button id="toggle-edit" onclick="toggleEditMode()"><i class="fa fa-eye"></i></button>
             <button id="reset-button" onclick="resetEvents()"><i class="fa fa-undo"></i></button>
             <button id="toggle-theme" onclick="toggleTheme()"><i class="fa fa-adjust"></i></button>
@@ -575,7 +576,7 @@
 
             document.getElementById('toggle-edit').innerHTML = isEditMode ? '<i class="fa fa-edit"></i>' : '<i class="fa fa-eye"></i>';
 
-            document.querySelectorAll('#summary, #generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
+            document.querySelectorAll('#generateButton, .event-header input, .event-content input, .event-textarea, .add-event-button, .delete-button').forEach(element => {
                 element.disabled = !isEditMode;
             });
 
@@ -661,10 +662,23 @@
 
         function handleDateSelection(selectedDates) {
             if (selectedDates.length === 2) {
-                document.getElementById('start-date').value = selectedDates[0].toISOString().substring(0, 10);
-                document.getElementById('end-date').value = selectedDates[1].toISOString().substring(0, 10);
+                document.getElementById('start-date').value = formatDate(selectedDates[0]);
+                document.getElementById('end-date').value = formatDate(selectedDates[1]);
             }
         }
+
+        function formatDate(date) {
+            let d = new Date(date);
+            let month = '' + (d.getMonth() + 1);
+            let day = '' + d.getDate();
+            let year = d.getFullYear();
+
+            if (month.length < 2) month = '0' + month;
+            if (day.length < 2) day = '0' + day;
+
+            return [year, month, day].join('-');
+        }
+
 
         function generateEvents() {
             const startDate = document.getElementById('start-date').value;
@@ -675,8 +689,8 @@
                 return;
             }
 
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+            const start = new Date(startDate + 'T00:00:00'); // ここでローカルタイムを指定
+            const end = new Date(endDate + 'T00:00:00'); // ここでローカルタイムを指定
 
             if (start > end) {
                 alert("End date should be after start date.");
@@ -1052,6 +1066,47 @@
             } else {
                 alert('No events to share. Please save events first.');
             }
+        }
+      
+        function outPutEvents() {
+            // 現在のHTML内容を取得
+            const htmlContent = document.documentElement.outerHTML;
+                
+            // 必要な部分だけを抽出
+            const doc = new DOMParser().parseFromString(htmlContent, 'text/html');
+                
+            // 編集モードを無効にする
+            doc.body.classList.remove('edit-mode');
+            isEditMode = false;
+                
+            // 非表示にする要素
+            const elementsToHide = ['#share-button', '#toggle-edit', '#reset-button'];
+            elementsToHide.forEach(selector => {
+                const element = doc.querySelector(selector);
+                if (element) {
+                    element.style.display = 'none';
+                }
+            });
+        
+            // 現在の入力内容とtextareaのサイズを保持
+            doc.querySelectorAll('input, textarea').forEach(element => {
+                if (element.type === 'text' || element.tagName.toLowerCase() === 'textarea') {
+                    element.setAttribute('value', element.value);
+                    if (element.tagName.toLowerCase() === 'textarea') {
+                        element.style.height = `${element.scrollHeight}px`;
+                    }
+                }
+            });
+        
+            // 生成されたHTMLを文字列に変換
+            const updatedHtmlContent = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+        
+            // Blobを生成してダウンロードリンクを作成
+            const blob = new Blob([updatedHtmlContent], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'itinerary.html';
+            link.click();
         }
 
         function toggleTheme() {
